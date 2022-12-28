@@ -4,14 +4,13 @@ import (
 	"math/big"
 	"testing"
 
-	core "github.com/KyberNetwork/uniswap-sdk-core/entities"
+	core "github.com/daoleno/uniswap-sdk-core/entities"
+	"github.com/daoleno/uniswapv3-sdk/constants"
+	"github.com/daoleno/uniswapv3-sdk/entities"
+	"github.com/daoleno/uniswapv3-sdk/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/KyberNetwork/uniswapv3-sdk/constants"
-	"github.com/KyberNetwork/uniswapv3-sdk/entities"
-	"github.com/KyberNetwork/uniswapv3-sdk/utils"
 )
 
 var (
@@ -63,8 +62,7 @@ func TestAddCallParameters(t *testing.T) {
 		CommonAddLiquidityOptions: &CommonAddLiquidityOptions{
 			SlippageTolerance: slippageToleranceT,
 			Deadline:          deadlineT,
-			UseNative:         core.EtherOnChain(1).Currency,
-			NativeToken:       core.WETH9[1],
+			UseNative:         core.EtherOnChain(1),
 		},
 	}
 	_, err = AddCallParameters(pos, opts)
@@ -129,8 +127,7 @@ func TestAddCallParameters(t *testing.T) {
 		CommonAddLiquidityOptions: &CommonAddLiquidityOptions{
 			SlippageTolerance: slippageToleranceT,
 			Deadline:          deadlineT,
-			UseNative:         core.WETH9[1].Currency,
-			NativeToken:       core.WETH9[1],
+			UseNative:         core.EtherOnChain(1),
 		},
 		MintSpecificOptions: &MintSpecificOptions{
 			Recipient: recipientT,
@@ -146,8 +143,8 @@ func TestCollectCallParameters(t *testing.T) {
 	// works
 	opts := &CollectOptions{
 		TokenID:               tokenIDT,
-		ExpectedCurrencyOwed0: core.FromRawAmount(token0T.Currency, big.NewInt(0)),
-		ExpectedCurrencyOwed1: core.FromRawAmount(token1T.Currency, big.NewInt(0)),
+		ExpectedCurrencyOwed0: core.FromRawAmount(token0T, big.NewInt(0)),
+		ExpectedCurrencyOwed1: core.FromRawAmount(token1T, big.NewInt(0)),
 		Recipient:             recipientT,
 	}
 	params, err := CollectCallParameters(opts)
@@ -158,10 +155,10 @@ func TestCollectCallParameters(t *testing.T) {
 	// works with eth
 	opts = &CollectOptions{
 		TokenID:               tokenIDT,
-		ExpectedCurrencyOwed0: core.FromRawAmount(token1T.Currency, big.NewInt(0)),
-		ExpectedCurrencyOwed1: core.FromRawAmount(core.WETH9[1].Currency, big.NewInt(0)),
+		ExpectedCurrencyOwed0: core.FromRawAmount(token1T, big.NewInt(0)),
+		ExpectedCurrencyOwed1: core.FromRawAmount(ether, big.NewInt(0)),
 		ExpectedTokenOwed0:    token1T,
-		ExpectedTokenOwed1:    core.WETH9[1],
+		ExpectedTokenOwed1:    ether,
 		Recipient:             recipientT,
 	}
 	params, err = CollectCallParameters(opts)
@@ -180,8 +177,8 @@ func TestRemoveCallParameters(t *testing.T) {
 		SlippageTolerance:   slippageToleranceT,
 		Deadline:            deadlineT,
 		CollectOptions: &CollectOptions{
-			ExpectedCurrencyOwed0: core.FromRawAmount(token0T.Currency, big.NewInt(0)),
-			ExpectedCurrencyOwed1: core.FromRawAmount(token1T.Currency, big.NewInt(0)),
+			ExpectedCurrencyOwed0: core.FromRawAmount(token0T, big.NewInt(0)),
+			ExpectedCurrencyOwed1: core.FromRawAmount(token1T, big.NewInt(0)),
 			Recipient:             recipientT,
 		},
 	}
@@ -197,8 +194,8 @@ func TestRemoveCallParameters(t *testing.T) {
 		SlippageTolerance:   slippageToleranceT,
 		Deadline:            deadlineT,
 		CollectOptions: &CollectOptions{
-			ExpectedCurrencyOwed0: core.FromRawAmount(token0T.Currency, big.NewInt(0)),
-			ExpectedCurrencyOwed1: core.FromRawAmount(token1T.Currency, big.NewInt(0)),
+			ExpectedCurrencyOwed0: core.FromRawAmount(token0T, big.NewInt(0)),
+			ExpectedCurrencyOwed1: core.FromRawAmount(token1T, big.NewInt(0)),
 			Recipient:             recipientT,
 		},
 	}
@@ -215,8 +212,8 @@ func TestRemoveCallParameters(t *testing.T) {
 		Deadline:            deadlineT,
 		BurnToken:           true,
 		CollectOptions: &CollectOptions{
-			ExpectedCurrencyOwed0: core.FromRawAmount(token0T.Currency, big.NewInt(0)),
-			ExpectedCurrencyOwed1: core.FromRawAmount(token1T.Currency, big.NewInt(0)),
+			ExpectedCurrencyOwed0: core.FromRawAmount(token0T, big.NewInt(0)),
+			ExpectedCurrencyOwed1: core.FromRawAmount(token1T, big.NewInt(0)),
 			Recipient:             recipientT,
 		},
 	}
@@ -232,8 +229,8 @@ func TestRemoveCallParameters(t *testing.T) {
 		SlippageTolerance:   slippageToleranceT,
 		Deadline:            deadlineT,
 		CollectOptions: &CollectOptions{
-			ExpectedCurrencyOwed0: core.FromRawAmount(token0T.Currency, big.NewInt(0)),
-			ExpectedCurrencyOwed1: core.FromRawAmount(token1T.Currency, big.NewInt(0)),
+			ExpectedCurrencyOwed0: core.FromRawAmount(token0T, big.NewInt(0)),
+			ExpectedCurrencyOwed1: core.FromRawAmount(token1T, big.NewInt(0)),
 			Recipient:             recipientT,
 		},
 	}
@@ -251,8 +248,8 @@ func TestRemoveCallParameters(t *testing.T) {
 		SlippageTolerance:   slippageToleranceT,
 		Deadline:            deadlineT,
 		CollectOptions: &CollectOptions{
-			ExpectedCurrencyOwed0: core.FromRawAmount(token0T.Currency, big.NewInt(0)),
-			ExpectedCurrencyOwed1: core.FromRawAmount(token1T.Currency, big.NewInt(0)),
+			ExpectedCurrencyOwed0: core.FromRawAmount(token0T, big.NewInt(0)),
+			ExpectedCurrencyOwed1: core.FromRawAmount(token1T, big.NewInt(0)),
 			Recipient:             recipientT,
 		},
 	}
@@ -262,15 +259,15 @@ func TestRemoveCallParameters(t *testing.T) {
 	assert.Equal(t, "0x00", utils.ToHex(params.Value))
 
 	// works with eth
-	ethAmount := core.FromRawAmount(core.EtherOnChain(1).Currency, big.NewInt(0))
-	tokenAmount := core.FromRawAmount(token1T.Currency, big.NewInt(0))
+	ethAmount := core.FromRawAmount(core.EtherOnChain(1), big.NewInt(0))
+	tokenAmount := core.FromRawAmount(token1T, big.NewInt(0))
 	var (
 		owed0Amount *core.CurrencyAmount
 		owed1Amount *core.CurrencyAmount
 		owed0Token  *core.Token
 		owed1Token  *core.Token
 	)
-	if pool1wethT.Token0.Equals(token1T) {
+	if pool1wethT.Token0.Equal(token1T) {
 		owed0Amount = tokenAmount
 		owed1Amount = ethAmount
 		owed0Token = token1T
