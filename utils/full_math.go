@@ -8,9 +8,28 @@ import (
 
 func MulDivRoundingUp(a, b, denominator *big.Int) *big.Int {
 	product := new(big.Int).Mul(a, b)
-	result := new(big.Int).Div(product, denominator)
-	if new(big.Int).Rem(product, denominator).Cmp(big.NewInt(0)) != 0 {
-		result.Add(result, constants.One)
+	if new(big.Int).Rem(product, denominator).Cmp(constants.Zero) != 0 {
+		return product.Div(product, denominator).Add(product, constants.One)
+	} else {
+		return product.Div(product, denominator)
 	}
-	return result
+}
+
+// MulDivRoundingUpModified avoid malloc by reusing inputs a and b, a will be modified and used as result
+func MulDivRoundingUpModified(a, b, denominator *big.Int) *big.Int {
+	a.Mul(a, b)
+	if b.Rem(a, denominator).Cmp(constants.Zero) != 0 {
+		return a.Div(a, denominator).Add(a, constants.One)
+	} else {
+		return a.Div(a, denominator)
+	}
+}
+
+// MulDivRoundingUpModified avoid malloc by reusing inputs a and helper, current value of helper doesn't matter
+func DivRoundingUpModified(a, denominator, helper *big.Int) *big.Int {
+	if helper.Rem(a, denominator).Cmp(constants.Zero) != 0 {
+		return a.Div(a, denominator).Add(a, constants.One)
+	} else {
+		return a.Div(a, denominator)
+	}
 }
