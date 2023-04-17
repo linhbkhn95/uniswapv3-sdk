@@ -24,9 +24,8 @@ var (
 	ErrInvalidSqrtRatio = errors.New("invalid sqrt ratio")
 )
 
-func mulShift(val *big.Int, mulBy *big.Int) *big.Int {
-
-	return new(big.Int).Rsh(new(big.Int).Mul(val, mulBy), 128)
+func mulShiftX(inout *big.Int, mulBy *big.Int) {
+	inout.Mul(inout, mulBy).Rsh(inout, 128)
 }
 
 var (
@@ -65,78 +64,78 @@ func GetSqrtRatioAtTick(tick int) (*big.Int, error) {
 	if tick < 0 {
 		absTick = -tick
 	}
-	var ratio *big.Int
+	ratio := new(big.Int)
 	if absTick&0x1 != 0 {
-		ratio = sqrtConst1
+		ratio.Set(sqrtConst1)
 	} else {
-		ratio = sqrtConst2
+		ratio.Set(sqrtConst2)
 	}
 	if (absTick & 0x2) != 0 {
-		ratio = mulShift(ratio, sqrtConst3)
+		mulShiftX(ratio, sqrtConst3)
 	}
 	if (absTick & 0x4) != 0 {
-		ratio = mulShift(ratio, sqrtConst4)
+		mulShiftX(ratio, sqrtConst4)
 	}
 	if (absTick & 0x8) != 0 {
-		ratio = mulShift(ratio, sqrtConst5)
+		mulShiftX(ratio, sqrtConst5)
 	}
 	if (absTick & 0x10) != 0 {
-		ratio = mulShift(ratio, sqrtConst6)
+		mulShiftX(ratio, sqrtConst6)
 	}
 	if (absTick & 0x20) != 0 {
-		ratio = mulShift(ratio, sqrtConst7)
+		mulShiftX(ratio, sqrtConst7)
 	}
 	if (absTick & 0x40) != 0 {
-		ratio = mulShift(ratio, sqrtConst8)
+		mulShiftX(ratio, sqrtConst8)
 	}
 	if (absTick & 0x80) != 0 {
-		ratio = mulShift(ratio, sqrtConst9)
+		mulShiftX(ratio, sqrtConst9)
 	}
 	if (absTick & 0x100) != 0 {
-		ratio = mulShift(ratio, sqrtConst10)
+		mulShiftX(ratio, sqrtConst10)
 	}
 	if (absTick & 0x200) != 0 {
-		ratio = mulShift(ratio, sqrtConst11)
+		mulShiftX(ratio, sqrtConst11)
 	}
 	if (absTick & 0x400) != 0 {
-		ratio = mulShift(ratio, sqrtConst12)
+		mulShiftX(ratio, sqrtConst12)
 	}
 	if (absTick & 0x800) != 0 {
-		ratio = mulShift(ratio, sqrtConst13)
+		mulShiftX(ratio, sqrtConst13)
 	}
 	if (absTick & 0x1000) != 0 {
-		ratio = mulShift(ratio, sqrtConst14)
+		mulShiftX(ratio, sqrtConst14)
 	}
 	if (absTick & 0x2000) != 0 {
-		ratio = mulShift(ratio, sqrtConst15)
+		mulShiftX(ratio, sqrtConst15)
 	}
 	if (absTick & 0x4000) != 0 {
-		ratio = mulShift(ratio, sqrtConst16)
+		mulShiftX(ratio, sqrtConst16)
 	}
 	if (absTick & 0x8000) != 0 {
-		ratio = mulShift(ratio, sqrtConst17)
+		mulShiftX(ratio, sqrtConst17)
 	}
 	if (absTick & 0x10000) != 0 {
-		ratio = mulShift(ratio, sqrtConst18)
+		mulShiftX(ratio, sqrtConst18)
 	}
 	if (absTick & 0x20000) != 0 {
-		ratio = mulShift(ratio, sqrtConst19)
+		mulShiftX(ratio, sqrtConst19)
 	}
 	if (absTick & 0x40000) != 0 {
-		ratio = mulShift(ratio, sqrtConst20)
+		mulShiftX(ratio, sqrtConst20)
 	}
 	if (absTick & 0x80000) != 0 {
-		ratio = mulShift(ratio, sqrtConst21)
+		mulShiftX(ratio, sqrtConst21)
 	}
 	if tick > 0 {
-		ratio = new(big.Int).Div(entities.MaxUint256, ratio)
+		ratio.Div(entities.MaxUint256, ratio)
 	}
 
 	// back to Q96
 	if new(big.Int).Rem(ratio, Q32).Cmp(constants.Zero) > 0 {
-		return new(big.Int).Add((new(big.Int).Div(ratio, Q32)), constants.One), nil
+		return ratio.Div(ratio, Q32).Add(ratio, constants.One), nil
 	} else {
-		return new(big.Int).Div(ratio, Q32), nil
+		return ratio.Div(ratio, Q32), nil
 	}
 }
 
@@ -161,25 +160,28 @@ func GetTickAtSqrtRatio(sqrtRatioX96 *big.Int) (int, error) {
 		return 0, err
 	}
 	var r *big.Int
-	if big.NewInt(msb).Cmp(big.NewInt(128)) >= 0 {
+	if msb >= 128 {
 		r = new(big.Int).Rsh(sqrtRatioX128, uint(msb-127))
 	} else {
 		r = new(big.Int).Lsh(sqrtRatioX128, uint(127-msb))
 	}
 
-	log2 := new(big.Int).Lsh(new(big.Int).Sub(big.NewInt(msb), big.NewInt(128)), 64)
+	log2 := big.NewInt(msb - 128)
+	log2.Lsh(log2, 64)
 
+	f := new(big.Int)
 	for i := 0; i < 14; i++ {
-		r = new(big.Int).Rsh(new(big.Int).Mul(r, r), 127)
-		f := new(big.Int).Rsh(r, 128)
-		log2 = new(big.Int).Or(log2, new(big.Int).Lsh(f, uint(63-i)))
-		r = new(big.Int).Rsh(r, uint(f.Int64()))
+		r.Mul(r, r).Rsh(r, 127)
+		f.Rsh(r, 128)
+		rshf := f.Int64()
+		log2.Or(log2, f.Lsh(f, uint(63-i)))
+		r.Rsh(r, uint(rshf))
 	}
 
-	logSqrt10001 := new(big.Int).Mul(log2, magicSqrt10001)
-
-	tickLow := new(big.Int).Rsh(new(big.Int).Sub(logSqrt10001, magicTickLow), 128).Int64()
-	tickHigh := new(big.Int).Rsh(new(big.Int).Add(logSqrt10001, magicTickHigh), 128).Int64()
+	logSqrt10001 := log2.Mul(log2, magicSqrt10001)
+	bigTick := new(big.Int)
+	tickLow := bigTick.Sub(logSqrt10001, magicTickLow).Rsh(bigTick, 128).Int64()
+	tickHigh := bigTick.Add(logSqrt10001, magicTickHigh).Rsh(bigTick, 128).Int64()
 
 	if tickLow == tickHigh {
 		return int(tickLow), nil

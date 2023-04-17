@@ -244,11 +244,11 @@ func (p *Pool) swap(zeroForOne bool, amountSpecified, sqrtPriceLimitX96 *big.Int
 		tick                     int
 		liquidity                *big.Int
 	}{
-		amountSpecifiedRemaining: amountSpecified,
-		amountCalculated:         constants.Zero,
+		amountSpecifiedRemaining: new(big.Int).Set(amountSpecified),
+		amountCalculated:         new(big.Int).Set(constants.Zero),
 		sqrtPriceX96:             p.SqrtRatioX96,
 		tick:                     p.TickCurrent,
-		liquidity:                p.Liquidity,
+		liquidity:                new(big.Int).Set(p.Liquidity),
 	}
 
 	// start swap while loop
@@ -295,11 +295,13 @@ func (p *Pool) swap(zeroForOne bool, amountSpecified, sqrtPriceLimitX96 *big.Int
 		}
 
 		if exactInput {
-			state.amountSpecifiedRemaining = new(big.Int).Sub(state.amountSpecifiedRemaining, new(big.Int).Add(step.amountIn, step.feeAmount))
-			state.amountCalculated = new(big.Int).Sub(state.amountCalculated, step.amountOut)
+			state.amountSpecifiedRemaining.Sub(state.amountSpecifiedRemaining, step.amountIn)
+			state.amountSpecifiedRemaining.Sub(state.amountSpecifiedRemaining, step.feeAmount)
+			state.amountCalculated = state.amountCalculated.Sub(state.amountCalculated, step.amountOut)
 		} else {
-			state.amountSpecifiedRemaining = new(big.Int).Add(state.amountSpecifiedRemaining, step.amountOut)
-			state.amountCalculated = new(big.Int).Add(state.amountCalculated, new(big.Int).Add(step.amountIn, step.feeAmount))
+			state.amountSpecifiedRemaining.Add(state.amountSpecifiedRemaining, step.amountOut)
+			state.amountCalculated.Add(state.amountCalculated, step.amountIn)
+			state.amountCalculated.Add(state.amountCalculated, step.feeAmount)
 		}
 
 		// TODO
@@ -315,9 +317,10 @@ func (p *Pool) swap(zeroForOne bool, amountSpecified, sqrtPriceLimitX96 *big.Int
 				// if we're moving leftward, we interpret liquidityNet as the opposite sign
 				// safe because liquidityNet cannot be type(int128).min
 				if zeroForOne {
-					liquidityNet = new(big.Int).Mul(liquidityNet, constants.NegativeOne)
+					state.liquidity.Sub(state.liquidity, liquidityNet)
+				} else {
+					state.liquidity.Add(state.liquidity, liquidityNet)
 				}
-				state.liquidity = utils.AddDelta(state.liquidity, liquidityNet)
 			}
 			if zeroForOne {
 				state.tick = step.tickNext - 1
