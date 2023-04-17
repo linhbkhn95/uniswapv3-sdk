@@ -7,13 +7,16 @@ import (
 )
 
 var MaxFee = new(big.Int).Exp(big.NewInt(10), big.NewInt(6), nil)
+var MaxFeeInt64 = MaxFee.Uint64()
 
 func ComputeSwapStep(sqrtRatioCurrentX96, sqrtRatioTargetX96, liquidity, amountRemaining *big.Int, feePips constants.FeeAmount) (sqrtRatioNextX96, amountIn, amountOut, feeAmount *big.Int, err error) {
 	zeroForOne := sqrtRatioCurrentX96.Cmp(sqrtRatioTargetX96) >= 0
 	exactIn := amountRemaining.Cmp(constants.Zero) >= 0
 
 	if exactIn {
-		amountRemainingLessFee := new(big.Int).Div(new(big.Int).Mul(amountRemaining, new(big.Int).Sub(MaxFee, big.NewInt(int64(feePips)))), MaxFee)
+		amountRemainingLessFee := new(big.Int).SetUint64(MaxFeeInt64 - uint64(feePips))
+		amountRemainingLessFee.Mul(amountRemaining, amountRemainingLessFee)
+		amountRemainingLessFee.Div(amountRemainingLessFee, MaxFee)
 		if zeroForOne {
 			amountIn = GetAmount0Delta(sqrtRatioTargetX96, sqrtRatioCurrentX96, liquidity, true)
 		} else {
